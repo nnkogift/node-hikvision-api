@@ -10,6 +10,7 @@ const options: ConnectionOptions = {
 }
 
 describe('new-hikvision', () => {
+    jest.setTimeout(30000);
     it('can be instantiated', () => {
         const hikvision = new Hikvision();
         expect(hikvision).toBeTruthy();
@@ -28,6 +29,17 @@ describe('new-hikvision', () => {
         });
         hikvision.connect(options);
     });
+
+    it("receives data from connection", (done) => {
+
+        const hikvision = new Hikvision();
+        hikvision.on('data', (data) => {
+            expect(data).toBeTruthy();
+            done();
+        });
+        hikvision.connect(options, "/stream");
+    });
+
 
     it('can disconnect', () => {
         const hikvision = new Hikvision();

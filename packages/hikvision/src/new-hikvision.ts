@@ -21,16 +21,23 @@ export default class Hikvision extends EventEmitter {
         this.emit("error", error);
     }
 
-    connect(options: ConnectionOptions) {
+    async connect(options: ConnectionOptions, path: string = "/ISAPI/Event/notification/alertStream") {
         console.info(`Connecting to camera at ${options.host}:${options.port}...`);
-        const headers = generateHeader(options);
-        const client = requestConnection(options, headers);
-        this.connected = true;
-        this.client = client;
-        setupClientListeners(this.client, this._emitDataEvent, this._emitErrorEvent);
-        this.emit('connect', this);
-        console.info(`Connected to camera at ${options.host}:${options.port}!`);
-
+        const headers = generateHeader(options, path);
+        requestConnection(options, headers, {
+            onClose: () => {
+                this.connected = false;
+                this.emit("disconnect", this);
+            },
+            onError: this._emitErrorEvent,
+            onData: this._emitDataEvent,
+            onSuccess: (client: any) => {
+                this.connected = true;
+                this.client = client;
+                this.emit('connect', this);
+                console.info(`Connected to camera at ${options.host}:${options.port}!`);
+            }
+        });
     }
 
     disconnect() {
